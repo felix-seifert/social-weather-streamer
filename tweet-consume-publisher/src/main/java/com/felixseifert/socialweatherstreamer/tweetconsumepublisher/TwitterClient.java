@@ -43,20 +43,21 @@ public class TwitterClient {
   @ConfigProperty(name = "twitter.bearer-token")
   String twitterBearerToken;
 
-  public Optional<BufferedReader> connectStream() throws URISyntaxException, IOException {
+  public Optional<BufferedReader> connectStream(final int bufferSize)
+      throws URISyntaxException, IOException {
     final HttpClient httpClient = getHttpClientWithStandardCookieSpecs();
     final HttpGet httpGet = createHttpGetWithHeader(twitterUrlStream);
     final HttpResponse response = httpClient.execute(httpGet);
     final Optional<HttpEntity> entityOptional = Optional.ofNullable(response.getEntity());
-    return getBufferedReaderFromEntity(entityOptional);
+    return getBufferedReaderFromEntity(entityOptional, bufferSize);
   }
 
   private Optional<BufferedReader> getBufferedReaderFromEntity(
-      final Optional<HttpEntity> entityOptional) {
+      final Optional<HttpEntity> entityOptional, final int bufferSize) {
     return entityOptional
         .map(this::getReader)
         .map(InputStreamReader::new)
-        .map(inputStreamReader -> new BufferedReader(inputStreamReader, 1024));
+        .map(inputStreamReader -> new BufferedReader(inputStreamReader, bufferSize));
   }
 
   private InputStream getReader(final HttpEntity httpEntity) {
@@ -66,20 +67,6 @@ public class TwitterClient {
       e.printStackTrace();
     }
     return null;
-  }
-
-  private void readIncomingStream(HttpEntity entity) {
-    try {
-      final InputStreamReader reader = new InputStreamReader((entity.getContent()));
-      final BufferedReader bufferedReader = new BufferedReader(reader, 1024);
-      String line = bufferedReader.readLine();
-      while (line != null) {
-        System.out.println(line);
-        line = bufferedReader.readLine();
-      }
-    } catch (IOException e) {
-      e.printStackTrace();
-    }
   }
 
   public List<String> getExistingRules() throws URISyntaxException, IOException {

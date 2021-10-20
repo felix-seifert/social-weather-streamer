@@ -33,7 +33,7 @@ public class TwitterListener {
     if (!existingRules.isEmpty()) twitterClient.deleteRules(existingRules);
     twitterClient.createRules(rules);
 
-    BufferedReader streamReader = twitterClient.connectStream().orElseThrow();
+    BufferedReader streamReader = twitterClient.connectStream(1024).orElseThrow();
     consumeStream(streamReader);
   }
 
