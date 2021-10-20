@@ -43,21 +43,24 @@ public class TwitterClient {
   @ConfigProperty(name = "twitter.bearer-token")
   String twitterBearerToken;
 
-  public Optional<BufferedReader> connectStream(final int bufferSize)
-      throws URISyntaxException, IOException {
+  public Stream<Tweet> connectStream(final int bufferSize) throws URISyntaxException, IOException {
     final HttpClient httpClient = getHttpClientWithStandardCookieSpecs();
     final HttpGet httpGet = createHttpGetWithHeader(twitterUrlStream);
     final HttpResponse response = httpClient.execute(httpGet);
     final Optional<HttpEntity> entityOptional = Optional.ofNullable(response.getEntity());
-    return getBufferedReaderFromEntity(entityOptional, bufferSize);
+    return getTweetStreamFromEntity(entityOptional, bufferSize);
   }
 
-  private Optional<BufferedReader> getBufferedReaderFromEntity(
+  private Stream<Tweet> getTweetStreamFromEntity(
       final Optional<HttpEntity> entityOptional, final int bufferSize) {
-    return entityOptional
+    return entityOptional.stream()
         .map(this::getReader)
         .map(InputStreamReader::new)
-        .map(inputStreamReader -> new BufferedReader(inputStreamReader, bufferSize));
+        .map(inputStreamReader -> new BufferedReader(inputStreamReader, bufferSize))
+        .flatMap(BufferedReader::lines)
+        .map(JSONObject::new)
+        .map(jsonObject -> jsonObject.getJSONObject("data"))
+        .map(Tweet::parseFromJsonObject);
   }
 
   private InputStream getReader(final HttpEntity httpEntity) {
@@ -87,6 +90,10 @@ public class TwitterClient {
         .collect(Collectors.toList());
   }
 
+  private Stream<JSONObject> convertJsonArrayToStream(final JSONArray jsonArray) {
+    return IntStream.range(0, jsonArray.length()).mapToObj(jsonArray::getJSONObject);
+  }
+
   public void deleteRules(final List<String> existingRules) throws IOException, URISyntaxException {
     final HttpClient httpClient = getHttpClientWithStandardCookieSpecs();
     final HttpPost httpPost = createHttpPostWithHeaderAndBodyToDelete(existingRules);
@@ -103,7 +110,7 @@ public class TwitterClient {
     entityOptional.ifPresent(entity -> LOGGER.info(httpEntityToString(entity)));
   }
 
-  private HttpGet createHttpGetWithHeader(String url) throws URISyntaxException {
+  private HttpGet createHttpGetWithHeader(final String url) throws URISyntaxException {
     final URIBuilder uriBuilder = new URIBuilder(url);
     final HttpGet httpGet = new HttpGet(uriBuilder.build());
     httpGet.setHeader("Authorization", String.format("Bearer %s", twitterBearerToken));
@@ -135,7 +142,7 @@ public class TwitterClient {
     return httpPost;
   }
 
-  private String getFormattedDeleteString(List<String> ids) {
+  private String getFormattedDeleteString(final List<String> ids) {
     final StringBuilder stringBuilder = new StringBuilder();
     ids.stream().map(id -> "\"" + id + "\"" + ",").forEach(stringBuilder::append);
     final String result = stringBuilder.toString();
@@ -163,10 +170,6 @@ public class TwitterClient {
     return HttpClients.custom()
         .setDefaultRequestConfig(RequestConfig.custom().setCookieSpec(CookieSpecs.STANDARD).build())
         .build();
-  }
-
-  private Stream<JSONObject> convertJsonArrayToStream(final JSONArray jsonArray) {
-    return IntStream.range(0, jsonArray.length()).mapToObj(jsonArray::getJSONObject);
   }
 
   private String httpEntityToString(final HttpEntity entity) {

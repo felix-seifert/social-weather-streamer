@@ -1,11 +1,11 @@
 package com.felixseifert.socialweatherstreamer.tweetconsumepublisher;
 
 import io.quarkus.runtime.Startup;
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.ApplicationScoped;
 import org.jboss.logging.Logger;
@@ -33,11 +33,11 @@ public class TwitterListener {
     if (!existingRules.isEmpty()) twitterClient.deleteRules(existingRules);
     twitterClient.createRules(rules);
 
-    BufferedReader streamReader = twitterClient.connectStream(1024).orElseThrow();
-    consumeStream(streamReader);
+    final Stream<Tweet> tweetStream = twitterClient.connectStream(1024);
+    consumeStream(tweetStream);
   }
 
-  private void consumeStream(BufferedReader streamReader) {
-    streamReader.lines().forEach(LOGGER::info);
+  private void consumeStream(final Stream<Tweet> tweetStream) {
+    tweetStream.forEach(LOGGER::info);
   }
 }
