@@ -3,12 +3,14 @@ package com.felixseifert.socialweatherstreamer.tweetconsumepublisher;
 import io.quarkus.runtime.Startup;
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.ApplicationScoped;
+import javax.inject.Inject;
+import org.eclipse.microprofile.reactive.messaging.Channel;
+import org.eclipse.microprofile.reactive.messaging.Emitter;
 import org.jboss.logging.Logger;
 
 @Startup
@@ -17,11 +19,12 @@ public class TwitterListener {
 
   private static final Logger LOGGER = Logger.getLogger(TwitterListener.class);
 
-  private final TwitterClient twitterClient;
+  @Inject
+  TwitterClient twitterClient;
 
-  public TwitterListener(TwitterClient twitterClient) {
-    this.twitterClient = twitterClient;
-  }
+  @Inject
+  @Channel("tweets")
+  Emitter<Tweet> tweetEmitter;
 
   @PostConstruct
   public void startListenerAfterConstruction() throws IOException, URISyntaxException {
@@ -50,7 +53,8 @@ public class TwitterListener {
     tweetStream
         .parallel()
         .filter(tweet -> tweet.geoInformation().isPresent())
-        .forEach(LOGGER::info);
+        .peek(LOGGER::info)
+        .forEach(tweet -> tweetEmitter.send(tweet));
   }
 
   private String createRuleForCity(final String city) {
