@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.ApplicationScoped;
@@ -24,10 +25,18 @@ public class TwitterListener {
 
   @PostConstruct
   public void startListenerAfterConstruction() throws IOException, URISyntaxException {
-    Map<String, String> rules =
-        Map.of(
-            "(entity:\\\"New York\\\" OR #NewYork OR \\\"New York\\\") lang:en -is:retweet",
-            "New York");
+    final Map<String, String> rules =
+        Stream.of(
+                "New York",
+                "New York City",
+                "San Francisco",
+                "Stockholm",
+                "Sydney",
+                "Barcelona",
+                "Berlin",
+                "Singapore",
+                "Tokyo")
+            .collect(Collectors.toMap(this::createRuleForCity, city -> city));
 
     final List<String> existingRules = twitterClient.getExistingRules();
     if (!existingRules.isEmpty()) twitterClient.deleteRules(existingRules);
@@ -38,6 +47,16 @@ public class TwitterListener {
   }
 
   private void consumeStream(final Stream<Tweet> tweetStream) {
-    tweetStream.forEach(LOGGER::info);
+    tweetStream
+        .parallel()
+        .filter(tweet -> tweet.geoInformation().isPresent())
+        .forEach(LOGGER::info);
+  }
+
+  private String createRuleForCity(final String city) {
+    final String cityWithoutSpaces = city.replaceAll("\\s+", "");
+    return String.format(
+        "(entity:\\\"%s\\\" OR #%s OR \\\"%s\\\") lang:en -is:retweet",
+        city, cityWithoutSpaces, city);
   }
 }
