@@ -5,9 +5,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -34,6 +36,12 @@ public class TwitterClient {
 
   private static final Logger LOGGER = Logger.getLogger(TwitterClient.class);
 
+  private final Map<String, String> fieldsToRetrieve =
+      Map.of(
+          "tweet.fields", "created_at",
+          "expansions", "geo.place_id",
+          "place.fields", "id,full_name,country,country_code,geo,place_type");
+
   @ConfigProperty(name = "twitter.url.stream")
   String twitterUrlStream;
 
@@ -45,7 +53,7 @@ public class TwitterClient {
 
   public Stream<Tweet> connectStream(final int bufferSize) throws URISyntaxException, IOException {
     final HttpClient httpClient = getHttpClientWithStandardCookieSpecs();
-    final HttpGet httpGet = createHttpGetWithHeader(twitterUrlStream);
+    final HttpGet httpGet = createHttpGetWithHeader(twitterUrlStream, fieldsToRetrieve);
     final HttpResponse response = httpClient.execute(httpGet);
     final Optional<HttpEntity> entityOptional = Optional.ofNullable(response.getEntity());
     return getTweetStreamFromEntity(entityOptional, bufferSize);
@@ -59,9 +67,8 @@ public class TwitterClient {
         .map(InputStreamReader::new)
         .map(inputStreamReader -> new BufferedReader(inputStreamReader, bufferSize))
         .flatMap(BufferedReader::lines)
-        .map(JSONObject::new)
-        .map(jsonObject -> jsonObject.getJSONObject("data"))
-        .map(Tweet::parseFromJsonObject);
+        .filter(line -> !line.isBlank())
+        .map(Tweet::parseJsonLineFromTwitter);
   }
 
   private InputStream getStream(final HttpEntity httpEntity) {
@@ -113,7 +120,18 @@ public class TwitterClient {
 
   private HttpGet createHttpGetWithHeader(final String url) throws URISyntaxException {
     final URIBuilder uriBuilder = new URIBuilder(url);
-    final HttpGet httpGet = new HttpGet(uriBuilder.build());
+    return createHttpGetWithHeader(uriBuilder.build());
+  }
+
+  private HttpGet createHttpGetWithHeader(
+      final String url, final Map<String, String> fieldsToRetrieve) throws URISyntaxException {
+    final URIBuilder uriBuilder = new URIBuilder(url);
+    fieldsToRetrieve.forEach(uriBuilder::addParameter);
+    return createHttpGetWithHeader(uriBuilder.build());
+  }
+
+  private HttpGet createHttpGetWithHeader(final URI uri) {
+    final HttpGet httpGet = new HttpGet(uri);
     httpGet.setHeader("Authorization", String.format("Bearer %s", twitterBearerToken));
     httpGet.setHeader("content-type", "application/json");
     return httpGet;
