@@ -54,7 +54,8 @@ public class TwitterClient {
   private Stream<Tweet> getTweetStreamFromEntity(
       final Optional<HttpEntity> entityOptional, final int bufferSize) {
     return entityOptional.stream()
-        .map(this::getReader)
+        .map(this::getStream)
+        .filter(Objects::nonNull)
         .map(InputStreamReader::new)
         .map(inputStreamReader -> new BufferedReader(inputStreamReader, bufferSize))
         .flatMap(BufferedReader::lines)
@@ -63,7 +64,7 @@ public class TwitterClient {
         .map(Tweet::parseFromJsonObject);
   }
 
-  private InputStream getReader(final HttpEntity httpEntity) {
+  private InputStream getStream(final HttpEntity httpEntity) {
     try {
       return httpEntity.getContent();
     } catch (IOException e) {
