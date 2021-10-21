@@ -1,5 +1,6 @@
 package com.felixseifert.socialweatherstreamer.tweetconsumepublisher;
 
+import com.felixseifert.socialweatherstreamer.tweetconsumepublisher.model.Tweet;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;

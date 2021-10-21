@@ -1,5 +1,6 @@
 package com.felixseifert.socialweatherstreamer.tweetconsumepublisher;
 
+import com.felixseifert.socialweatherstreamer.tweetconsumepublisher.model.Tweet;
 import io.quarkus.runtime.Startup;
 import java.io.IOException;
 import java.net.URISyntaxException;

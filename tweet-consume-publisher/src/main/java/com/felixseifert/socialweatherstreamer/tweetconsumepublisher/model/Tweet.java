@@ -1,4 +1,4 @@
-package com.felixseifert.socialweatherstreamer.tweetconsumepublisher;
+package com.felixseifert.socialweatherstreamer.tweetconsumepublisher.model;
 
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import java.util.Optional;
@@ -16,9 +16,9 @@ public abstract class Tweet {
 
   public abstract String createdAt();
 
-  public abstract Optional<String> geoInformation();
+  public abstract Optional<GeoInformation> geoInformation();
 
-  public static Tweet parseJsonLineFromTwitter(@NotBlank String jsonLine) {
+  public static Tweet parseJsonLineFromTwitter(@NotBlank final String jsonLine) {
     final JSONObject lineObject = new JSONObject(jsonLine);
 
     final JSONObject dataObject = lineObject.getJSONObject("data");
@@ -26,7 +26,7 @@ public abstract class Tweet {
     final String text = dataObject.getString("text");
     final String createdAtString = dataObject.getString("created_at");
 
-    final Optional<String> geoInformation = getGeoInformationIfPresent(lineObject);
+    final Optional<GeoInformation> geoInformation = getGeoInformationIfPresent(lineObject);
 
     return ImmutableTweet.builder()
         .id(id)
@@ -36,14 +36,11 @@ public abstract class Tweet {
         .build();
   }
 
-  private static Optional<String> getGeoInformationIfPresent(final JSONObject lineObject) {
+  private static Optional<GeoInformation> getGeoInformationIfPresent(final JSONObject lineObject) {
     return lineObject.getJSONObject("data").getJSONObject("geo").isEmpty()
         ? Optional.empty()
         : Optional.of(
-            lineObject
-                .getJSONObject("includes")
-                .getJSONArray("places")
-                .getJSONObject(0)
-                .toString());
+            GeoInformation.parseJsonObjectFromTwitter(
+                lineObject.getJSONObject("includes").getJSONArray("places").getJSONObject(0)));
   }
 }
