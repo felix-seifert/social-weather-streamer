@@ -1,11 +1,13 @@
 package com.felixseifert.socialweatherstreamer.tweetconsumepublisher;
 
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import java.util.Optional;
 import javax.validation.constraints.NotBlank;
 import org.immutables.value.Value;
 import org.json.JSONObject;
 
 @Value.Immutable
+@JsonSerialize(as = ImmutableTweet.class)
 public abstract class Tweet {
 
   public abstract Long id();
