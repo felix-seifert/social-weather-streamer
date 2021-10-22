@@ -4,6 +4,7 @@ import com.felixseifert.socialweatherstreamer.tweetconsumepublisher.model.Tweet;
 import io.quarkus.runtime.Startup;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
