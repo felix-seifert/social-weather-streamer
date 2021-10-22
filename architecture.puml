@@ -1,7 +1,9 @@
 @startuml
 
 cloud "filtered-stream"<<Twitter>>
+
 queue tweets<<Kafka>>
+queue correlations<<Kafka>>
 
 component "tweet-consume-publisher"<<Quarkus>>
 component "spark-processor"<<Spark>>
@@ -11,8 +13,8 @@ component "analytics-indicator"<<Vaadin>>
 [tweet-consume-publisher] -right-> [tweets]
 
 [tweets] -right-> [spark-processor]
-[spark-processor] -left-> [tweets]
+[spark-processor] -right-> [correlations]
 
-[tweets] --> [analytics-indicator]
+[correlations] --> [analytics-indicator]
 
 @enduml
