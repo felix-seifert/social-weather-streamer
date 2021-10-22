@@ -1,21 +1,18 @@
 package com.felixseifert.socialweatherstreamer.tweetconsumepublisher;
 
 import com.felixseifert.socialweatherstreamer.tweetconsumepublisher.model.Tweet;
-import io.quarkus.runtime.Startup;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import javax.annotation.PostConstruct;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import org.eclipse.microprofile.reactive.messaging.Channel;
 import org.eclipse.microprofile.reactive.messaging.Emitter;
 import org.jboss.logging.Logger;
 
-@Startup
 @ApplicationScoped
 public class TwitterListener {
 
@@ -28,8 +25,7 @@ public class TwitterListener {
   @Channel("tweets")
   Emitter<Tweet> tweetEmitter;
 
-  @PostConstruct
-  public void startListenerAfterConstruction() throws IOException, URISyntaxException {
+  public void startListener() throws IOException, URISyntaxException {
     final Map<String, String> rules =
         Stream.of(
                 "New York",
