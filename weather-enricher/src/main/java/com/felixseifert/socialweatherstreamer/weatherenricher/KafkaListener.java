@@ -3,6 +3,8 @@ package com.felixseifert.socialweatherstreamer.weatherenricher;
 import com.felixseifert.socialweatherstreamer.weatherenricher.model.ImmutableTweet;
 import com.felixseifert.socialweatherstreamer.weatherenricher.model.Tweet;
 import com.felixseifert.socialweatherstreamer.weatherenricher.model.WeatherInformation;
+import java.io.IOException;
+import java.net.URISyntaxException;
 import java.util.Optional;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
@@ -15,14 +17,15 @@ public class KafkaListener {
 
   private static final Logger LOGGER = Logger.getLogger(KafkaListener.class);
 
-  @Inject WeatherService weatherService;
+  @Inject WeatherAPIClient weatherAPIClient;
 
   @Incoming("tweets")
   @Outgoing("tweets-enriched")
-  public Tweet enrichTweetsWithWeatherAtPostLocation(Tweet tweet) {
+  public Tweet enrichTweetsWithWeatherAtPostLocation(Tweet tweet)
+      throws URISyntaxException, IOException {
     final String location = getLocation(tweet);
     final Optional<WeatherInformation> weatherInformationOfLocation =
-        weatherService.getCurrentWeatherAtLocation(location);
+        weatherAPIClient.getCurrentWeatherAtLocation(location);
     final Tweet enrichedTweet = addWeatherInformationToTweet(tweet, weatherInformationOfLocation);
     LOGGER.infov("Publish enriched Tweet on topic 'tweets-enriched': {0}", enrichedTweet);
     return enrichedTweet;

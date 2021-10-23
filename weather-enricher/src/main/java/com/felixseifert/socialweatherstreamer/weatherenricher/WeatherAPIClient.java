@@ -1,6 +1,7 @@
 package com.felixseifert.socialweatherstreamer.weatherenricher;
 
 import com.felixseifert.socialweatherstreamer.weatherenricher.model.WeatherInformation;
+import io.quarkus.cache.CacheResult;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.Optional;
@@ -29,6 +30,7 @@ public class WeatherAPIClient {
   @ConfigProperty(name = "weather-api.token")
   String weatherApiToken;
 
+  @CacheResult(cacheName = "weather-information")
   public Optional<WeatherInformation> getCurrentWeatherAtLocation(final String locationName)
       throws URISyntaxException, IOException {
     LOGGER.infov("Retrieve weather information for {0}", locationName);
@@ -36,6 +38,11 @@ public class WeatherAPIClient {
     final HttpGet httpGet = createHttpGet(locationName);
     final HttpResponse response = httpClient.execute(httpGet);
     final Optional<HttpEntity> entityOptional = Optional.ofNullable(response.getEntity());
+    return parseEntityToRetrieveWeatherInformation(entityOptional);
+  }
+
+  private Optional<WeatherInformation> parseEntityToRetrieveWeatherInformation(
+      final Optional<HttpEntity> entityOptional) {
     return entityOptional
         .map(this::httpEntityToString)
         .map(JSONObject::new)

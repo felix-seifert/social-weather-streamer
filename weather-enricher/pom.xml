@@ -53,9 +53,8 @@
       <scope>provided</scope>
     </dependency>
     <dependency>
-      <groupId>com.github.ben-manes.caffeine</groupId>
-      <artifactId>caffeine</artifactId>
-      <version>3.0.4</version>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-cache</artifactId>
     </dependency>
   </dependencies>
   <build>
