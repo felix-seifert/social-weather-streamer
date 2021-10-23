@@ -11,7 +11,8 @@ populates the topic _tweets_ with live Tweets which are about a few cities.
 
 To start and interact with Kafka, have a look at the folder [infrastructure](../infrastructure). To
 consume Twitter APIs, you would have to
-[apply for a developer account](https://developer.twitter.com/en/apply-for-access).
+[apply for a developer account](https://developer.twitter.com/en/apply-for-access) and insert the
+Bearer token into the file [application.properties](src/main/resources/application.properties).
 
 ## Run
 
@@ -51,8 +52,7 @@ command:
     -Dquarkus.package.type=uber-jar
 ```
 
-The application is then runnable using `java -jar target/quarkus-app/quarkus-run.jar`. (do not
-forget port and sensor id).
+The application is then runnable using `java -jar target/quarkus-app/quarkus-run.jar`.
 
 ## Native Executable
 
@@ -83,8 +83,8 @@ If you want to learn more about building native executables, please consult
 
 ## Data Model
 
-The following Tweets represents an example of how a Tweets is structured when it is published to a
-local Kafka topic.
+The following Tweet represents an example of how a Tweet is structured when it is published to the
+topic `tweets`.
 
 ```json
 {
