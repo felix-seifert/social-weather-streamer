@@ -32,7 +32,7 @@ public class KafkaListener {
   }
 
   private String getLocation(final Tweet tweet) {
-    return tweet.geoInformation().fullName() + " " + tweet.geoInformation().country();
+    return tweet.geoInformation().fullName() + ", " + tweet.geoInformation().country();
   }
 
   private Tweet addWeatherInformationToTweet(
