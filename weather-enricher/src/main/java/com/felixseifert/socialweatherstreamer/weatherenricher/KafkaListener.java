@@ -3,8 +3,6 @@ package com.felixseifert.socialweatherstreamer.weatherenricher;
 import com.felixseifert.socialweatherstreamer.weatherenricher.model.ImmutableTweet;
 import com.felixseifert.socialweatherstreamer.weatherenricher.model.Tweet;
 import com.felixseifert.socialweatherstreamer.weatherenricher.model.WeatherInformation;
-import java.io.IOException;
-import java.net.URISyntaxException;
 import java.util.Optional;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
@@ -17,22 +15,21 @@ public class KafkaListener {
 
   private static final Logger LOGGER = Logger.getLogger(KafkaListener.class);
 
-  @Inject WeatherAPIClient weatherAPIClient;
+  @Inject WeatherService weatherService;
 
   @Incoming("tweets")
   @Outgoing("tweets-enriched")
-  public Tweet enrichTweetsWithWeatherAtPostLocation(Tweet tweet)
-      throws URISyntaxException, IOException {
+  public Tweet enrichTweetsWithWeatherAtPostLocation(Tweet tweet) {
     final String location = getLocation(tweet);
     final Optional<WeatherInformation> weatherInformationOfLocation =
-        weatherAPIClient.getCurrentWeatherAtLocation(location);
+        weatherService.getCurrentWeatherAtLocation(location);
     final Tweet enrichedTweet = addWeatherInformationToTweet(tweet, weatherInformationOfLocation);
     LOGGER.infov("Publish enriched Tweet on topic 'tweets-enriched': {0}", enrichedTweet);
     return enrichedTweet;
   }
 
   private String getLocation(final Tweet tweet) {
-    return tweet.geoInformation().fullName() + " " + tweet.geoInformation().country();
+    return tweet.geoInformation().fullName() + ", " + tweet.geoInformation().country();
   }
 
   private Tweet addWeatherInformationToTweet(
