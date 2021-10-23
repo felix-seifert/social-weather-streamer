@@ -1,18 +1,25 @@
 @startuml
 
 cloud "filtered-stream"<<Twitter>>
+cloud "realtime-weather-at-location"<<WeatherAPI>>
 
 queue tweets<<Kafka>>
+queue "tweets-enriched"<<Kafka>>
 queue correlations<<Kafka>>
 
 component "tweet-consume-publisher"<<Quarkus>>
+component "weather-enricher"<<Quarkus>>
 component "spark-processor"<<Spark>>
 component "analytics-indicator"<<Vaadin>>
 
 [filtered-stream] -(0-> [tweet-consume-publisher]
 [tweet-consume-publisher] -right-> [tweets]
 
-[tweets] -right-> [spark-processor]
+[tweets] -right-> [weather-enricher]
+[realtime-weather-at-location] -(0-> [weather-enricher]
+[weather-enricher] -right-> [tweets-enriched]
+
+[tweets-enriched] -right-> [spark-processor]
 [spark-processor] -right-> [correlations]
 
 [correlations] --> [analytics-indicator]
