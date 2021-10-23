@@ -23,12 +23,20 @@ public class KafkaListener {
   @Outgoing("tweets-enriched")
   public Tweet enrichTweetsWithWeatherAtPostLocation(Tweet tweet)
       throws URISyntaxException, IOException {
-    final String locationNameOfTweet = tweet.geoInformation().fullName();
+    final String location = getLocation(tweet);
     final Optional<WeatherInformation> weatherInformationOfLocation =
-        weatherAPIClient.getCurrentWeatherAtLocation(locationNameOfTweet);
-    final Tweet enrichedTweet =
-        ImmutableTweet.copyOf(tweet).withWeatherInformation(weatherInformationOfLocation);
+        weatherAPIClient.getCurrentWeatherAtLocation(location);
+    final Tweet enrichedTweet = addWeatherInformationToTweet(tweet, weatherInformationOfLocation);
     LOGGER.infov("Publish enriched Tweet on topic 'tweets-enriched': {0}", enrichedTweet);
     return enrichedTweet;
+  }
+
+  private String getLocation(final Tweet tweet) {
+    return tweet.geoInformation().fullName() + " " + tweet.geoInformation().country();
+  }
+
+  private Tweet addWeatherInformationToTweet(
+      final Tweet tweet, final Optional<WeatherInformation> weatherInformationOfLocation) {
+    return ImmutableTweet.copyOf(tweet).withWeatherInformation(weatherInformationOfLocation);
   }
 }
