@@ -5,6 +5,8 @@ import org.apache.spark.sql.{SparkSession, Row, Encoders}
 import org.apache.spark.streaming.State
 import org.apache.spark.sql.functions.{col, from_json}
 import org.apache.spark.sql.streaming.GroupState
+import org.apache.spark.sql.types.StructType
+import org.apache.spark.sql.catalyst.ScalaReflection
 
 case class GeoInfo(
     id: String,
@@ -44,28 +46,39 @@ object TweetProcessor {
     val read_topic = "tweets-enriched"
     val write_topic = "correlations"
 
-    // Read the stream
+    // // Read the stream
     val df = spark.readStream
       .format("kafka")
       .option("kafka.bootstrap.servers", "localhost:9092")
       .option("subscribe", read_topic)
-      .load()
+      .load
 
-    df.printSchema()
+    // df.printSchema()
 
-    val tweet = df
-      .selectExpr("CAST(value AS STRING)")
-    // .select(from_json(col("value"), Tweet).as("data"))
-    // .select("data.*")
+    val raw = df.selectExpr("CAST(value AS STRING)").as[String]
+    val schema =
+      ScalaReflection.schemaFor[Tweet].dataType.asInstanceOf[StructType]
+    val extracted = raw
+      .select(from_json(col("value"), schema).as("data"))
+      .select("data.*")
+
+    extracted.show
 
     // Write the results
-    val stream = df.writeStream
-      .format("kafka")
-      .outputMode("append")
-      .option("kafka.bootstrap.servers", "localhost:9092")
-      .option("topic", write_topic)
+    val stream = extracted.writeStream
+      .format("console")
+      .outputMode("update")
       .start()
       .awaitTermination()
+
+    // Write the results
+    // val stream = extracted.writeStream
+    //   .format("kafka")
+    //   .option("kafka.bootstrap.servers", "localhost:9092")
+    //   .option("topic", write_topic)
+    //   .start()
+
+    // stream.awaitTermination()
 
   }
 }
