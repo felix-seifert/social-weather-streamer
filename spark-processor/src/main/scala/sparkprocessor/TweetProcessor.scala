@@ -23,12 +23,13 @@ case class GeoInfo(
     geoType: String
 )
 case class WeatherInfo(
-    lastUpdated: String,
-    temperatureCelsius: Double,
-    precipitationMm: Double,
+    last_updated: String,
+    temp_c: Double,
+    precip_mm: Double,
     humidity: Integer,
-    feelsLikeCelsius: Double,
-    isDay: Integer
+    cloud: Integer,
+    feelslike_c: Double,
+    is_day: Integer
 )
 case class Tweet(
     id: Long,
@@ -40,7 +41,10 @@ case class Tweet(
 
 object TweetProcessor {
   // Load a sentiment anaysis ml pipeline
-// val pipeline = new PretrainedPipeline("analyze_sentimentdl_use_twitter", lang = "en")
+  val pipeline = new PretrainedPipeline(
+    "analyze_sentimentdl_use_twitter",
+    lang = "en"
+  ).lightModel
 
   def main(args: Array[String]) = {
     val read_topic = "tweets-enriched"
@@ -51,21 +55,33 @@ object TweetProcessor {
       .config("spark.sql.streaming.checkpointLocation", "/tmp/")
       .getOrCreate()
 
-    // spark.conf.set("spark.sql.streaming.checkpointLocation", "/tmp/")
-
     import spark.implicits._
 
     val schema =
       ScalaReflection.schemaFor[Tweet].dataType.asInstanceOf[StructType]
 
+    def correlator(sentiment: Double, temp: Double): Double = {
+      var t = temp
+      t -= -5.0
+      t /= 25.0
+      t = t match {
+        case x if (x < -1.0) => -1.0
+        case x if (x > 1.0) => 1.0
+        case x => x
+      }
+
+      t * sentiment
+    }
+
     def mapper(text: Column, wi: Column): Double = {
-      // val sentiment = pipeline.fullAnnotate match {
-      //   case "negative" => -1
-      //   case "positive" => 1
-      //   case _ => 0
+      val feels_like = 15.0
+      // val sentiment = pipeline(text) match {
+      //   case "negative" => -1.0
+      //   case "positive" => 1.0
+      //   case _          => 0
       // }
-      val correlation = 0.0
-      correlation
+      // correlator(sentiment, feels_like)
+      correlator(1.0, feels_like)
     }
 
     // // Read the stream
@@ -78,27 +94,59 @@ object TweetProcessor {
       .select(from_json(col("value"), schema).as("data"))
       .select("data.*")
 
-    val correlated = df
+    val correlation = df
       .withColumn(
-        "correlated",
+        "correlation",
         lit(mapper(col("text"), col("weatherInformation")))
       )
 
-    correlated.writeStream
-    // df.writeStream
-      .format("console")
-      .outputMode("update")
-      .start()
-      .awaitTermination()
+    // correlated.writeStream
+    // // df.writeStream
+    //   .format("console")
+    //   .outputMode("update")
+    //   .start()
+    //   .awaitTermination()
 
     // Write the results
     // df.writeStream
-    // correlated.writeStream
-      // .format("kafka")
-      // .option("kafka.bootstrap.servers", "localhost:9092")
-      // .option("topic", write_topic)
-      // .start()
-      // .awaitTermination()
+    correlation.toJSON.writeStream
+      .format("kafka")
+      .option("kafka.bootstrap.servers", "localhost:9092")
+      .option("topic", write_topic)
+      .start()
+      .awaitTermination()
 
   }
 }
+
+/* correlations maths
+
+def shift_real_temp(real_temp: float) -> float:
+    return real_temp - 5
+
+
+def convert_temperature(temperature: float) -> float:
+    return temperature/25
+
+
+def move_temp_to_new_scale(temp: float) -> float:
+    shifted_temp = shift_real_temp(temp)
+    new_temp = convert_temperature(shifted_temp)
+
+    if new_temp < -1:
+        return -1
+    if new_temp > 1:
+        return 1
+    return new_temp
+
+
+def calculate_correlation(sentiment: str, temperature: float) -> float:
+    return sentiment_to_number(sentiment) * move_temp_to_new_scale(temperature)
+
+
+text_sentiment = 'positive'
+current_temperature = 6
+
+print(calculate_correlation(text_sentiment, current_temperature))
+
+ */
