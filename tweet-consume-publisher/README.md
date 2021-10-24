@@ -14,6 +14,9 @@ consume Twitter APIs, you would have to
 [apply for a developer account](https://developer.twitter.com/en/apply-for-access) and insert the
 Bearer token into the file [application.properties](src/main/resources/application.properties).
 
+As this service was build with the native compilation feature of GraalVM in mind, the service
+requires at least Java version 11.
+
 ## Run
 
 ### Development Mode

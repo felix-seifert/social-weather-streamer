@@ -10,6 +10,9 @@ consume WeatherAPI's data, you would have to
 [register for an API key](https://www.weatherapi.com/signup.aspx) and insert the key in the
 file [application.properties](src/main/resources/application.properties).
 
+As this service was build with the native compilation feature of GraalVM in mind, the service
+requires at least Java version 11.
+
 ## Run
 
 ### Development Mode
