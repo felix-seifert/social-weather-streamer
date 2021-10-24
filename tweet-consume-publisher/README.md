@@ -56,6 +56,8 @@ The application is then runnable using `java -jar target/quarkus-app/quarkus-run
 
 ## Native Executable
 
+> :x: Currently, this service does not parse Tweets correctly when it runs in native mode, it just publishes empty messages to Kafka. Please help in debugging and/or run the service in the JVM [production mode](#production-mode).
+
 To achieve a fast startup and an application with a smaller footprint, you can run the application
 as a native executable. You can create a native executable using:
 
