@@ -4,8 +4,8 @@ This services connects to Twitter's
 [Filtered Stream](https://developer.twitter.com/en/docs/twitter-api/tweets/filtered-stream)
 API. It pulls Tweets which were just published and match the rules in the class
 [TwitterListener](src/main/java/com/felixseifert/socialweatherstreamer/tweetconsumepublisher/TwitterListener.java)
-and publishes the Tweets with a geolocation to the local Kafka topic _tweets_. Basically, it
-populates the topic _tweets_ with live Tweets which are about a few cities.
+The service then publishes the Tweets with a geolocation to the local Kafka topic _tweets_.
+Basically, it populates the topic _tweets_ with live Tweets which are about a few cities.
 
 ## Prerequisites
 
