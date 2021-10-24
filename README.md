@@ -8,11 +8,20 @@ data which we filtered out in our first step of gathering the tweets as seen bel
 
 ![alt text](./architecture.png "architecture")
 
+## Infrastructure
+
+As seen above, there are a bunch of things going on in this project.
+To ease the management of some of it, there is a [Infrastructure](./infrastructure/README.md) part of the project.
+This includes starting up Kafka in docker with ZooKeeper and script to set up the expected Kafka topics.
+There is also a script for consuming a topic, set to consume the `correlated` topic by default.
+See the [infrastructure readme](./infrastructure/README.md) for more information.
+
 ## Twitter Stream
 
 We applied for developer accounts over at [Twitter](https://twitter.com), which enabled us to use their API to query for tweets.
 This is done in the [ tweet-consume-publisher ](./tweet-consume-publisher/README.md)-module which describes how to get that part running.
-These tweets are then published to a Kafka topic, tweets, if they have geolocation.
+The stream from twitter is then rudimentary set to follow a few major cities as these locations have higher percentage geolocated data attached.
+These tweets are then published to a Kafka topic, `tweets`, if they have geolocation.
 This feed rolls at about one tweet with geolocation per 5 seconds.
 It is not super fast, but it is realistic data.
 
