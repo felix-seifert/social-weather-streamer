@@ -43,6 +43,9 @@ object TweetProcessor {
 
     import spark.implicits._
 
+    val schema =
+      ScalaReflection.schemaFor[Tweet].dataType.asInstanceOf[StructType]
+
     val read_topic = "tweets-enriched"
     val write_topic = "correlations"
 
@@ -51,34 +54,28 @@ object TweetProcessor {
       .format("kafka")
       .option("kafka.bootstrap.servers", "localhost:9092")
       .option("subscribe", read_topic)
-      .load
+      .load()
 
-    // df.printSchema()
-
-    val raw = df.selectExpr("CAST(value AS STRING)").as[String]
-    val schema =
-      ScalaReflection.schemaFor[Tweet].dataType.asInstanceOf[StructType]
-    val extracted = raw
+    df.selectExpr("CAST(value AS STRING)").as[String]
       .select(from_json(col("value"), schema).as("data"))
       .select("data.*")
 
-    extracted.show
+    // df.show(1)
 
     // Write the results
-    val stream = extracted.writeStream
-      .format("console")
-      .outputMode("update")
+    // val stream = df.writeStream
+    //   .format("console")
+    //   .outputMode("update")
+    //   .start()
+    //   .awaitTermination()
+
+    // Write the results
+    val stream = df.writeStream
+      .format("kafka")
+      .option("kafka.bootstrap.servers", "localhost:9092")
+      .option("topic", write_topic)
       .start()
       .awaitTermination()
-
-    // Write the results
-    // val stream = extracted.writeStream
-    //   .format("kafka")
-    //   .option("kafka.bootstrap.servers", "localhost:9092")
-    //   .option("topic", write_topic)
-    //   .start()
-
-    // stream.awaitTermination()
 
   }
 }
