@@ -39,3 +39,9 @@ bin/
 *.ipr
 *.iml
 *.iws
+
+node_modules
+project
+.bloop/
+.bsp/
+.metals/
