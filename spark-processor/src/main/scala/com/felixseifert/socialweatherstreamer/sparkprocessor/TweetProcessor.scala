@@ -1,18 +1,9 @@
-package com.felixseifert.socialweatherstreamer
-package sparkprocessor
+package com.felixseifert.socialweatherstreamer.sparkprocessor
 
-import org.apache.spark.sql.{SparkSession, Row, Encoders}
-import org.apache.spark.streaming.State
-import org.apache.spark.sql.functions.{col, from_json}
-import org.apache.spark.sql.streaming.GroupState
-import org.apache.spark.sql.types.StructType
+import org.apache.spark.sql.{Column, SparkSession}
 import org.apache.spark.sql.catalyst.ScalaReflection
 import org.apache.spark.sql.functions._
-import com.johnsnowlabs.nlp.pretrained.PretrainedPipeline
-import com.johnsnowlabs.nlp.base._
-import com.johnsnowlabs.nlp.annotator._
-import org.apache.spark.ml.Pipeline
-import org.apache.spark.sql.Column
+import org.apache.spark.sql.types.StructType
 
 case class GeoInfo(
     id: String,
@@ -41,10 +32,10 @@ case class Tweet(
 
 object TweetProcessor {
   // Load a sentiment anaysis ml pipeline
-  val pipeline = new PretrainedPipeline(
-    "analyze_sentimentdl_use_twitter",
-    lang = "en"
-  )
+//  val pipeline = new PretrainedPipeline(
+//    "analyze_sentimentdl_use_twitter",
+//    lang = "en"
+//  )
 
   def main(args: Array[String]) = {
     val read_topic = "tweets-enriched"
@@ -54,8 +45,6 @@ object TweetProcessor {
       .config("spark.master", "local")
       .config("spark.sql.streaming.checkpointLocation", "/tmp/")
       .getOrCreate()
-
-    import spark.implicits._
 
     val schema =
       ScalaReflection.schemaFor[Tweet].dataType.asInstanceOf[StructType]
